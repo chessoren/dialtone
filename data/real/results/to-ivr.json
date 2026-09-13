@@ -1,0 +1,210 @@
+{
+ "name": "to-ivr",
+ "label": "ivr",
+ "mode": "dialtone",
+ "calle_call_id": "call_7ys4JDbTHKVXUp0hThStrw",
+ "status": "completed",
+ "duration": 98.8,
+ "n_turns": 13,
+ "timing_source": "calle_events",
+ "task_prompt_revision": "2",
+ "interruptions": [
+  1.738
+ ],
+ "pickup_collision": true,
+ "handshake": {
+  "offered": false,
+  "acknowledged": false,
+  "nonce_ok": false,
+  "acknowledged_at": null,
+  "human_review": null,
+  "notes": []
+ },
+ "detection": {
+  "label": "ivr",
+  "confidence": 0.896,
+  "probs": {
+   "human": 0.0,
+   "ivr": 0.896,
+   "agent": 0.104
+  },
+  "via": "model",
+  "at_seconds": null,
+  "top_features": [
+   [
+    "ivr_markers",
+    2.371
+   ],
+   [
+    "latency_std",
+    -2.304
+   ],
+   [
+    "first_user_delay",
+    1.312
+   ],
+   [
+    "turn_words_mean",
+    1.14
+   ]
+  ]
+ },
+ "detection_behaviour_only": {
+  "label": "ivr",
+  "confidence": 0.896,
+  "probs": {
+   "human": 0.0,
+   "ivr": 0.896,
+   "agent": 0.104
+  },
+  "via": "model",
+  "at_seconds": null,
+  "top_features": [
+   [
+    "ivr_markers",
+    2.371
+   ],
+   [
+    "latency_std",
+    -2.304
+   ],
+   [
+    "first_user_delay",
+    1.312
+   ],
+   [
+    "turn_words_mean",
+    1.14
+   ]
+  ]
+ },
+ "time_to_detection": 98.8,
+ "timeline": [
+  {
+   "t": 1,
+   "label": "ivr",
+   "conf": 0.992,
+   "via": "model"
+  },
+  {
+   "t": 2,
+   "label": "ivr",
+   "conf": 0.992,
+   "via": "model"
+  },
+  {
+   "t": 3,
+   "label": "ivr",
+   "conf": 0.992,
+   "via": "model"
+  },
+  {
+   "t": 4,
+   "label": "ivr",
+   "conf": 0.992,
+   "via": "model"
+  },
+  {
+   "t": 5,
+   "label": "ivr",
+   "conf": 0.992,
+   "via": "model"
+  },
+  {
+   "t": 6,
+   "label": "ivr",
+   "conf": 0.992,
+   "via": "model"
+  },
+  {
+   "t": 8,
+   "label": "ivr",
+   "conf": 0.992,
+   "via": "model"
+  },
+  {
+   "t": 10,
+   "label": "ivr",
+   "conf": 0.992,
+   "via": "model"
+  },
+  {
+   "t": 15,
+   "label": "ivr",
+   "conf": 0.992,
+   "via": "model"
+  },
+  {
+   "t": 20,
+   "label": "ivr",
+   "conf": 0.992,
+   "via": "model"
+  },
+  {
+   "t": 30,
+   "label": "agent",
+   "conf": 0.661,
+   "via": "model"
+  },
+  {
+   "t": 45,
+   "label": "ivr",
+   "conf": 0.521,
+   "via": "model"
+  },
+  {
+   "t": 60,
+   "label": "ivr",
+   "conf": 0.739,
+   "via": "model"
+  },
+  {
+   "t": 98.8,
+   "label": "ivr",
+   "conf": 0.896,
+   "via": "model"
+  }
+ ],
+ "features": {
+  "first_user_delay": 0.0,
+  "first_turn_words": 4.0,
+  "latency_mean": 2.095,
+  "latency_std": 2.098,
+  "latency_regularity": 0.137,
+  "overlap_rate": 0.167,
+  "long_pause_rate": 0.333,
+  "backchannel_rate": 0.0,
+  "disfluency_rate": 0.203,
+  "formulaic_rate": 2.0,
+  "turn_words_mean": 4.917,
+  "turn_words_cv": 1.559,
+  "echo_overlap": 0.0,
+  "repeat_rate": 0.4,
+  "ivr_markers": 3.0,
+  "ivr_rejects": 0,
+  "dtmf_used": 0.0,
+  "disclosure": 0.0
+ },
+ "calle_reported": {
+  "task_completed": true,
+  "completion_confidence": {
+   "score": 0.82,
+   "label": "high"
+  },
+  "counterpart_type": "ivr",
+  "outcome": "other",
+  "human_review": "unknown"
+ },
+ "verdict": {
+  "attestation": "unverified",
+  "original_task_completed": true,
+  "dialtone_task_completed": false,
+  "counterpart": "ivr",
+  "counterpart_confidence": 0.896,
+  "commitment_type": "booking",
+  "artifact": null,
+  "reasons": [
+   "phone menu reached, but no record or confirmation was read back"
+  ]
+ }
+}

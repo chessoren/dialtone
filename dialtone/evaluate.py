@@ -291,8 +291,30 @@ def render_markdown(r: dict) -> str:
             "",
         ]
     if r.get("real_calls"):
-        lines += ["## Real calls", "", "| call | truth | predicted | via | time to detection | duration | attestation |", "|---|---|---|---|---|---|---|"]
-        for c in r["real_calls"]:
-            lines.append(f"| {c.get('name')} | {c.get('label')} | {c['detection']['label']} | {c['detection']['via']} | {c.get('time_to_detection')} | {c.get('duration')} | {c['verdict']['attestation']} |")
-        lines.append("")
+        calls = [c for c in r["real_calls"] if c.get("status") == "completed"]
+        lines += [
+            "## Real calls", "",
+            "CALL-E calls to our own Vapi voicebot line (one free US number, persona switched per call). "
+            "Timing comes from CALL-E's realtime event stream. Transcripts are not published; these rows are derived results.", "",
+            "| call | truth | task | token spoken | pickup collision | CALL-E counterpart | CALL-E task_completed | DIALTONE detected | DIALTONE label | DIALTONE task_completed |",
+            "|---|---|---|---|---|---|---|---|---|---|",
+        ]
+        for c in calls:
+            token = "-" if c.get("mode") != "dialtone" else ("acknowledged" if c["handshake"]["acknowledged"] else "yes" if c["handshake"]["offered"] else "lost")
+            lines.append(
+                f"| {c.get('name')} | {c.get('label')} | {c.get('mode')} r{c.get('task_prompt_revision') or '-'} | {token} | {c.get('pickup_collision')} | "
+                f"{c['calle_reported'].get('counterpart_type')} | {c['calle_reported'].get('task_completed')} | "
+                f"{c['detection']['label']} {c['detection']['confidence']:.2f} ({c['detection']['via']}) | {c['verdict']['attestation']} | {c['verdict']['dialtone_task_completed']} |"
+            )
+        machine = [c for c in calls if c.get("label") in ("agent", "ivr")]
+        lines += [
+            "",
+            f"- Counterpart identified correctly: **{sum(c['detection']['label'] == c.get('label') for c in calls)} / {len(calls)}**.",
+            f"- Pickup collisions (both sides spoke in the first 1.5 s): **{sum(bool(c.get('pickup_collision')) for c in calls)} / {len(calls)}**; "
+            f"DIALTONE token actually spoken: **{sum(c['handshake']['offered'] for c in calls if c.get('mode') == 'dialtone')} / {sum(c.get('mode') == 'dialtone' for c in calls)}** protocol calls.",
+            f"- CALL-E reported `task_completed: true` on **{sum(bool(c['calle_reported'].get('task_completed')) for c in calls)}**; "
+            f"DIALTONE kept **{sum(bool(c['verdict']['dialtone_task_completed']) for c in calls)}**. "
+            f"CALL-E labelled a machine as human on **{sum(c['calle_reported'].get('counterpart_type') == 'human' for c in machine)}** call(s).",
+            "",
+        ]
     return "\n".join(lines)

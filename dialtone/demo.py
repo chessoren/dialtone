@@ -115,9 +115,14 @@ BASELINE = ("baseline-plain-bot", "plain-bot", "agent", "plain")
 
 
 def _entry(call: dict, name: str, label: str, mode: str, clf: Classifier) -> dict:
-    nonce = NONCE if mode == "dialtone" else None
-    result = analyse(call, name, label, mode, nonce, clf)
-    t = Transcript.from_calle(call, label)
+    from .runner import load_events
+
+    # [] (not None) stops analyse() from loading a real call's events that share this channel name.
+    events = [] if call.get("_fixture") else (load_events(name) or [])
+    nonce = NONCE if mode == "dialtone" and call.get("_fixture") else None
+    result = analyse(call, name, label, mode, nonce, clf, events=events)
+    t = Transcript.from_calle_events(call, events, label) if events else Transcript.from_calle(call, label)
+    nonce = nonce or result["handshake"].get("nonce_expected")
     per_turn = []
     for turn in t.turns:
         if turn.offset_seconds is None:
@@ -142,8 +147,12 @@ def build(source: str = "fixtures", out: Path = Path("web/data/demo.json")) -> P
     clf = Classifier.load()
 
     def load(name: str, stem: str) -> dict:
-        path = DEMO_DIR / f"fixture-{stem}.json" if source == "fixtures" else Path("data/real/raw") / f"{name}.json"
-        return json.loads(path.read_text())
+        real = Path("data/real/raw") / f"{name}.json"
+        if source == "real" and real.exists():
+            return json.loads(real.read_text())
+        # No real call for this channel (e.g. the destination region was rejected): fall back to the
+        # scripted fixture, which the dashboard flags as SIMULATED.
+        return json.loads((DEMO_DIR / f"fixture-{stem}.json").read_text())
 
     calls = []
     for name, stem, label, mode, title, desc in CHANNELS:

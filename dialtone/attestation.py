@@ -36,7 +36,7 @@ COMMITMENT_KEYWORDS = [
     ("refund", r"\brefund|\breimburse|\bmoney back"),
     ("reschedule", r"\breschedul|\bmove (my|the) (appointment|booking|reservation)|\bchange (my|the) (appointment|time)"),
     ("payment", r"\bpay\b|\bpayment|\bcharge|\bbill me"),
-    ("booking", r"\bbook|\breserv|\bappointment|\bschedule (a|an)\b|\btable for"),
+    ("booking", r"\bbook|\breserv|\br[ée]serv|\bappointment|\bschedule (a|an)\b|\btable for|\brendez-vous"),
 ]
 
 CONFIRM_RE = re.compile(
@@ -44,11 +44,17 @@ CONFIRM_RE = re.compile(
     r"|i'?ve (booked|scheduled|cancell?ed|processed|reserved|put (you|him|her|them) down|made|moved|added|applied|wrote|written|got (you|him|her|them) down)"
     r"|(i )?(moved|put|wrote|penciled|pencilled) (you|him|her|them|it) (in|down|to)|we'?ll see (you|him|her|them)|see you (then|on)|got you down"
     r"|(you'?re|he'?s|she'?s|they'?re) (on for|down for|in the book|booked)|in the book"
-    r"|yes,? (that'?s|that works|we can|you can)|perfect,? (that|you))\b",
+    r"|yes,? (that'?s|that works|we can|you can)|perfect,? (that|you)"
+    # French
+    r"|c'?est (not[ée]|r[ée]serv[ée]|fait|bon|confirm[ée]|enregistr[ée]|ok)|je vous (ai )?(not[ée]|mets|inscris|r[ée]serve)|c'?est not[ée]"
+    r"|(r[ée]servation|table) (est )?(confirm[ée]e|not[ée]e|enregistr[ée]e)|on vous attend|[àa] vendredi)\b",
     re.I,
 )
-AFFIRM_RE = re.compile(r"^\W*(yes|yep|yeah|yup|correct|that'?s (right|correct|it)|exactly|right)\b", re.I)
-CONFIRM_REQUEST_RE = re.compile(r"\b(confirm|so that'?s|just to (check|confirm)|is that (right|correct)|correct\?|right\?)", re.I)
+AFFIRM_RE = re.compile(r"^\W*(yes|yep|yeah|yup|correct|that'?s (right|correct|it)|exactly|right|oui|ouais|c'?est [çc]a|exactement|tout [àa] fait|parfait)\b", re.I)
+CONFIRM_REQUEST_RE = re.compile(
+    r"\b(confirm|so that'?s|just to (check|confirm)|is that (right|correct)|correct\?|right\?|c'?est bien [çc]a|confirmer|pouvez-vous confirmer|c'?est correct)",
+    re.I,
+)
 
 _SPELLED = r"(?:(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|[a-z]|\d+)(?:[\s,.-]+|$)){3,}"
 _CODE = rf"(?:[A-Z]{{0,3}}-?\d[\dA-Z-]{{2,}}|{_SPELLED})"
@@ -177,6 +183,17 @@ def evaluate(
         return verdict("unverified")
 
     if who == "human":
+        # Model-independent vetoes: a counterpart that calls itself a machine, or that the calling
+        # agent itself identified as a machine, can never yield a human attestation.
+        from .features import DISCLOSURE_RE
+
+        self_declared = next((turn.text for turn in users if DISCLOSURE_RE.search(turn.text)), None)
+        calle_view = ((t.meta.get("structured_result") or {}).get("counterpart_type") or "").lower()
+        if self_declared or calle_view in ("agent", "ivr"):
+            why = f'counterpart described itself as automated: "{self_declared[:80]}"' if self_declared else \
+                f"CALL-E reported the counterpart as {calle_view}"
+            reasons.append(f"detector said human ({conf:.2f}), but {why}; refusing a human attestation on conflicting evidence")
+            return verdict("unverified")
         if conf < MIN_HUMAN_ATTEST_CONFIDENCE:
             reasons.append(f"probably a human ({conf:.2f}), but human attestation requires {MIN_HUMAN_ATTEST_CONFIDENCE:.2f}")
             return verdict("unverified")

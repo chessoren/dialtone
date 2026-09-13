@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-09-13T21:36:23+00:00",
+ "generated_at": "2026-09-13T22:53:34+00:00",
  "source": "fixtures",
  "goal": "Book a table for two this Friday at 7 PM under the name Jordan Lee.",
  "principal": "Jordan Lee",
@@ -12,7 +12,7 @@
    "calle_call_id": "fixture-human",
    "status": "completed",
    "duration": 55.3,
-   "n_turns": 11,
+   "n_turns": 9,
    "handshake": {
     "offered": true,
     "acknowledged": false,
@@ -38,7 +38,7 @@
      ],
      [
       "turn_words_mean",
-      1.045
+      0.834
      ],
      [
       "first_user_delay",
@@ -67,7 +67,7 @@
      ],
      [
       "turn_words_mean",
-      1.045
+      0.834
      ],
      [
       "first_user_delay",
@@ -170,10 +170,10 @@
     "long_pause_rate": 0.0,
     "backchannel_rate": 0.0,
     "disfluency_rate": 0.652,
-    "formulaic_rate": 0.143,
-    "turn_words_mean": 0.657,
-    "turn_words_cv": 0.613,
-    "echo_overlap": 0.031,
+    "formulaic_rate": 0.2,
+    "turn_words_mean": 0.92,
+    "turn_words_cv": 0.809,
+    "echo_overlap": 0.108,
     "repeat_rate": 0.0,
     "ivr_markers": 0.0,
     "ivr_rejects": 0,
@@ -229,21 +229,9 @@
     },
     {
      "speaker": "user",
-     "text": "mm-hmm",
+     "text": "mm-hmm Friday at seven, let me, let me check the book. Hang on. Okay yeah, we can do seven. Two people, Jordan, right?",
      "offset": 22.88,
-     "end": 23.45
-    },
-    {
-     "speaker": "user",
-     "text": "Friday at seven, let me, let me check the book. Hang on.",
-     "offset": 26.18,
-     "end": 30.82
-    },
-    {
-     "speaker": "user",
-     "text": "Okay yeah, we can do seven. Two people, Jordan, right?",
-     "offset": 35.02,
-     "end": 38.92
+     "end": 31.6
     },
     {
      "speaker": "bot",
@@ -316,29 +304,7 @@
      "via": "model"
     },
     {
-     "t": 23.45,
-     "label": "human",
-     "conf": 1.0,
-     "probs": {
-      "human": 1.0,
-      "ivr": 0.0,
-      "agent": 0.0
-     },
-     "via": "model"
-    },
-    {
-     "t": 30.82,
-     "label": "human",
-     "conf": 1.0,
-     "probs": {
-      "human": 1.0,
-      "ivr": 0.0,
-      "agent": 0.0
-     },
-     "via": "model"
-    },
-    {
-     "t": 38.92,
+     "t": 31.6,
      "label": "human",
      "conf": 1.0,
      "probs": {
@@ -362,22 +328,22 @@
     {
      "t": 49.68,
      "label": "human",
-     "conf": 0.999,
+     "conf": 0.998,
      "probs": {
-      "human": 0.999,
+      "human": 0.998,
       "ivr": 0.0,
-      "agent": 0.001
+      "agent": 0.002
      },
      "via": "model"
     },
     {
      "t": 54.38,
      "label": "human",
-     "conf": 0.999,
+     "conf": 0.998,
      "probs": {
-      "human": 0.999,
+      "human": 0.998,
       "ivr": 0.0,
-      "agent": 0.001
+      "agent": 0.002
      },
      "via": "model"
     },
@@ -460,60 +426,60 @@
      ]
     ]
    },
-   "time_to_detection": 20,
+   "time_to_detection": 1,
    "timeline": [
     {
      "t": 1,
-     "label": "human",
-     "conf": 0.52,
+     "label": "agent",
+     "conf": 0.972,
      "via": "model"
     },
     {
      "t": 2,
-     "label": "human",
-     "conf": 0.52,
+     "label": "agent",
+     "conf": 0.972,
      "via": "model"
     },
     {
      "t": 3,
-     "label": "human",
-     "conf": 0.52,
+     "label": "agent",
+     "conf": 0.972,
      "via": "model"
     },
     {
      "t": 4,
-     "label": "human",
-     "conf": 0.52,
+     "label": "agent",
+     "conf": 0.972,
      "via": "model"
     },
     {
      "t": 5,
-     "label": "human",
-     "conf": 0.52,
+     "label": "agent",
+     "conf": 0.972,
      "via": "model"
     },
     {
      "t": 6,
-     "label": "human",
-     "conf": 0.52,
+     "label": "agent",
+     "conf": 0.972,
      "via": "model"
     },
     {
      "t": 8,
-     "label": "human",
-     "conf": 0.52,
+     "label": "agent",
+     "conf": 0.972,
      "via": "model"
     },
     {
      "t": 10,
-     "label": "human",
-     "conf": 0.52,
+     "label": "agent",
+     "conf": 0.972,
      "via": "model"
     },
     {
      "t": 15,
-     "label": "human",
-     "conf": 0.52,
+     "label": "agent",
+     "conf": 0.972,
      "via": "model"
     },
     {
@@ -625,23 +591,23 @@
    "detections": [
     {
      "t": 7.03,
-     "label": "human",
-     "conf": 0.52,
+     "label": "agent",
+     "conf": 0.972,
      "probs": {
-      "human": 0.52,
-      "ivr": 0.021,
-      "agent": 0.458
+      "human": 0.026,
+      "ivr": 0.001,
+      "agent": 0.972
      },
      "via": "model"
     },
     {
      "t": 14.33,
-     "label": "human",
-     "conf": 0.52,
+     "label": "agent",
+     "conf": 0.972,
      "probs": {
-      "human": 0.52,
-      "ivr": 0.021,
-      "agent": 0.458
+      "human": 0.026,
+      "ivr": 0.001,
+      "agent": 0.972
      },
      "via": "model"
     },

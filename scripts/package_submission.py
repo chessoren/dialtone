@@ -22,7 +22,7 @@ APP_ROW = ("| [`apps/python/dialtone`](apps/python/dialtone/) | Python | For cal
 APPS_ROW = APP_ROW.replace("apps/python/dialtone", "python/dialtone", 1).replace("(apps/python/dialtone/)", "(python/dialtone/)")
 SAFETY_BULLET = ("- [`Two agents agreeing is not a commitment`](apps/python/dialtone/docs/PROTOCOL.md) - DIALTONE v1: spoken "
                  "agent-to-agent handshake, mode switch, and attestation labels that never upgrade `task_completed`.")
-IGNORE = shutil.ignore_patterns(".venv", "out", "raw", ".claude", "__pycache__", ".pytest_cache", ".env", "*.log",
+IGNORE = shutil.ignore_patterns(".git", ".venv", "out", "raw", ".claude", "__pycache__", ".pytest_cache", ".env", "*.log",
                                 "demo.real.json", "skills", "*.egg-info", "uv.lock", ".DS_Store")
 
 

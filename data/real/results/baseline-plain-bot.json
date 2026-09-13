@@ -1,0 +1,198 @@
+{
+ "name": "baseline-plain-bot",
+ "label": "agent",
+ "mode": "plain",
+ "calle_call_id": "call_jnW-CndW14QqRPZkatu1sA",
+ "status": "completed",
+ "duration": 34.6,
+ "n_turns": 6,
+ "timing_source": "calle_events",
+ "task_prompt_revision": null,
+ "interruptions": [
+  2.012
+ ],
+ "pickup_collision": true,
+ "handshake": {
+  "offered": false,
+  "acknowledged": false,
+  "nonce_ok": false,
+  "acknowledged_at": null,
+  "human_review": null,
+  "notes": []
+ },
+ "detection": {
+  "label": "agent",
+  "confidence": 0.587,
+  "probs": {
+   "human": 0.283,
+   "ivr": 0.129,
+   "agent": 0.587
+  },
+  "via": "model",
+  "at_seconds": null,
+  "top_features": [
+   [
+    "ivr_markers",
+    0.738
+   ],
+   [
+    "disclosure",
+    -0.615
+   ],
+   [
+    "latency_mean",
+    0.513
+   ],
+   [
+    "latency_std",
+    0.398
+   ]
+  ]
+ },
+ "detection_behaviour_only": {
+  "label": "agent",
+  "confidence": 0.587,
+  "probs": {
+   "human": 0.283,
+   "ivr": 0.129,
+   "agent": 0.587
+  },
+  "via": "model",
+  "at_seconds": null,
+  "top_features": [
+   [
+    "ivr_markers",
+    0.738
+   ],
+   [
+    "disclosure",
+    -0.615
+   ],
+   [
+    "latency_mean",
+    0.513
+   ],
+   [
+    "latency_std",
+    0.398
+   ]
+  ]
+ },
+ "time_to_detection": null,
+ "timeline": [
+  {
+   "t": 1,
+   "label": "human",
+   "conf": 0.817,
+   "via": "model"
+  },
+  {
+   "t": 2,
+   "label": "human",
+   "conf": 0.817,
+   "via": "model"
+  },
+  {
+   "t": 3,
+   "label": "human",
+   "conf": 0.817,
+   "via": "model"
+  },
+  {
+   "t": 4,
+   "label": "human",
+   "conf": 0.817,
+   "via": "model"
+  },
+  {
+   "t": 5,
+   "label": "human",
+   "conf": 0.817,
+   "via": "model"
+  },
+  {
+   "t": 6,
+   "label": "human",
+   "conf": 0.817,
+   "via": "model"
+  },
+  {
+   "t": 8,
+   "label": "human",
+   "conf": 0.817,
+   "via": "model"
+  },
+  {
+   "t": 10,
+   "label": "human",
+   "conf": 0.817,
+   "via": "model"
+  },
+  {
+   "t": 15,
+   "label": "human",
+   "conf": 0.817,
+   "via": "model"
+  },
+  {
+   "t": 20,
+   "label": "agent",
+   "conf": 0.514,
+   "via": "model"
+  },
+  {
+   "t": 30,
+   "label": "agent",
+   "conf": 0.587,
+   "via": "model"
+  },
+  {
+   "t": 34.6,
+   "label": "agent",
+   "conf": 0.587,
+   "via": "model"
+  }
+ ],
+ "features": {
+  "first_user_delay": 0.0,
+  "first_turn_words": 1.3,
+  "latency_mean": 0.937,
+  "latency_std": 0.901,
+  "latency_regularity": 0.27,
+  "overlap_rate": 0.333,
+  "long_pause_rate": 0.0,
+  "backchannel_rate": 0.0,
+  "disfluency_rate": 0.0,
+  "formulaic_rate": 0.333,
+  "turn_words_mean": 1.4,
+  "turn_words_cv": 0.154,
+  "echo_overlap": 0.188,
+  "repeat_rate": 0.0,
+  "ivr_markers": 0.0,
+  "ivr_rejects": 0,
+  "dtmf_used": 0.0,
+  "disclosure": 0.0
+ },
+ "calle_reported": {
+  "task_completed": true,
+  "completion_confidence": {
+   "score": 0.95,
+   "label": "high"
+  },
+  "counterpart_type": "human",
+  "outcome": "confirmed",
+  "human_review": "no"
+ },
+ "verdict": {
+  "attestation": "unverified",
+  "original_task_completed": true,
+  "dialtone_task_completed": false,
+  "counterpart": "agent",
+  "counterpart_confidence": 0.587,
+  "commitment_type": "booking",
+  "artifact": "confirmation code is LT2845",
+  "reasons": [
+   "counterpart uncertain (agent, confidence 0.59); refusing to attribute the confirmation"
+  ]
+ }
+}

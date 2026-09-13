@@ -13,6 +13,7 @@ call. Personas:
 from __future__ import annotations
 
 import os
+import re
 from typing import Any
 
 import httpx
@@ -113,11 +114,21 @@ class Vapi:
     def numbers(self) -> list[dict]:
         return self._req("GET", "/phone-number")
 
-    def ensure_number(self, area_code: str = "415") -> dict:
+    def ensure_number(self, area_codes: tuple[str, ...] = ("424", "657", "567", "415")) -> dict:
         for n in self.numbers():
             if n.get("provider") == "vapi" and n.get("name") == "dialtone-line":
                 return n
-        return self._req("POST", "/phone-number", json={"provider": "vapi", "numberDesiredAreaCode": area_code, "name": "dialtone-line"})
+        tried = list(area_codes)
+        while tried:
+            area = tried.pop(0)
+            r = self.http.post("/phone-number", json={"provider": "vapi", "numberDesiredAreaCode": area, "name": "dialtone-line"})
+            if r.status_code < 400:
+                return r.json()
+            # Free-number stock varies; Vapi's 400 names area codes that are available right now.
+            tried += [c for c in re.findall(r"\b\d{3}\b", r.text) if c not in tried and c != area]
+            if not tried:
+                raise SystemExit(f"Vapi POST /phone-number -> {r.status_code}: {r.text[:300]}")
+        raise SystemExit("no free Vapi number available")
 
     def use(self, persona: str) -> dict:
         ids = {name.removeprefix("dialtone-line-"): a["id"] for name, a in self.assistants().items()}

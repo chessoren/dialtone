@@ -108,10 +108,15 @@ class Transcript:
                 if len(turns) > len(best):
                     best = turns
                     attempt_meta = {k: attempt.get(k) for k in ("started_at", "ended_at", "status") if k in attempt}
-        turns = [
-            Turn(_norm_speaker(t.get("speaker")), t.get("text") or "", _float(t.get("offset_seconds")))
-            for t in best
-        ]
+        # Live CALL-E transcripts arrive as fragments ("Yes," / "please confirm it") with whole-second
+        # offsets. Consecutive fragments from one speaker are one turn for timing and lexical features.
+        turns: list[Turn] = []
+        for t in best:
+            speaker, text = _norm_speaker(t.get("speaker")), (t.get("text") or "").strip()
+            if turns and turns[-1].speaker == speaker:
+                turns[-1].text = f"{turns[-1].text} {text}".strip()
+            else:
+                turns.append(Turn(speaker, text, _float(t.get("offset_seconds"))))
         meta = {
             "calle_call_id": call.get("id"),
             "status": call.get("status"),
@@ -125,7 +130,63 @@ class Transcript:
         return cls(call.get("id") or "calle-call", turns, label, "real-calle", meta)
 
     @classmethod
-    def from_vapi(cls, call: dict[str, Any], label: str | None = None) -> "Transcript":
+    def from_calle_events(cls, call: dict[str, Any], events: list[dict[str, Any]], label: str | None = None) -> "Transcript":
+        """Build from CALL-E's realtime call events (``GET /v1/calls/{id}/events``).
+
+        The event stream carries millisecond timestamps for "Bot is speaking: ...", growing
+        "Callee said: ..." partials, and "Callee interrupted: ...". That gives *measured* turn
+        starts and barge-ins instead of the whole-second offsets in ``transcript_turns``.
+        """
+        from datetime import datetime
+
+        def ts(e: dict[str, Any]) -> float:
+            return datetime.fromisoformat(e["created_at"].replace("Z", "+00:00")).timestamp()
+
+        events = sorted((e for e in events if e.get("created_at")), key=ts)
+        connected = next((ts(e) for e in events if (e.get("message") or "").startswith("Call connected")), None)
+        if connected is None:
+            return cls.from_calle(call, label)
+        interruptions: list[float] = []
+        # Group each speaker's events into utterances independently (the two streams interleave
+        # while both talk), then order utterances by start time.
+        utterances: list[Turn] = []
+        open_by_speaker: dict[str, tuple[Turn, float]] = {}
+        for e in events:
+            msg, at = e.get("message") or "", round(ts(e) - connected, 3)
+            if msg.startswith("Callee interrupted:"):
+                interruptions.append(at)
+                continue
+            if msg.startswith("Bot is speaking: "):
+                speaker, text = "bot", msg[len("Bot is speaking: "):].strip()
+            elif msg.startswith("Callee said: "):
+                speaker, text = "user", msg[len("Callee said: "):].strip()
+            else:
+                continue
+            current = open_by_speaker.get(speaker)
+            other = open_by_speaker.get("user" if speaker == "bot" else "bot")
+            other_spoke_since = other is not None and current is not None and other[1] > current[1] and not _is_partial_revision(current[0].text, text)
+            if current and at - current[1] < 2.5 and not other_spoke_since:
+                turn = current[0]
+                if speaker == "user":
+                    # Callee partials are cumulative and get revised ("You for calling Lou" -> "Thank you for calling Luigi's ...").
+                    turn.text = text if _is_partial_revision(turn.text, text) else f"{turn.text} {text}"
+                else:
+                    turn.text = f"{turn.text} {text}"
+            else:
+                turn = Turn(speaker, text, at)
+                utterances.append(turn)
+            open_by_speaker[speaker] = (turn, at)
+        utterances.sort(key=lambda u: u.offset_seconds)
+        turns: list[Turn] = []
+        for u in utterances:
+            if turns and turns[-1].speaker == u.speaker:
+                turns[-1].text = f"{turns[-1].text} {u.text}"
+            else:
+                turns.append(u)
+        base = cls.from_calle(call, label)
+        base.turns = turns
+        base.meta.update({"timing_source": "calle_events", "interruptions": interruptions, "n_events": len(events)})
+        return base
         """Build from a Vapi call object, seen from the *line's* side.
 
         Vapi's ``bot``/``assistant`` is our voicebot (-> ``bot``); the inbound
@@ -147,6 +208,13 @@ class Transcript:
             "perspective": "inbound-line",
         }
         return cls(call.get("id") or "vapi-call", turns, label, "real-vapi", meta)
+
+
+def _is_partial_revision(old: str, new: str) -> bool:
+    """True when ``new`` is a grown/revised version of the partial transcript ``old``."""
+    a = {w.strip(".,?!'").lower() for w in old.split()}
+    b = {w.strip(".,?!'").lower() for w in new.split()}
+    return bool(a) and len(new) >= len(old) * 0.8 and len(a & b) >= max(1, len(a) // 2)
 
 
 def _norm_speaker(value: Any) -> str:

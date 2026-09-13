@@ -105,13 +105,42 @@ Because that used the test set, run 2 is labelled not blind. Set 2 is the check:
   - **Wrong refusal (1).** An airline agent's "your confirmation code *remains* K 7 P Q…" slipped past the artifact pattern.
 - **Not fixed.** These misses are left in the measured code on purpose, so set 2 stays a blind measurement.
 
-**Real calls:**
+**Real calls (6 CALL-E calls to our own Vapi voicebot line, 14 Sep 2026)**
 
-<!-- REAL -->
+| call | line persona · task | CALL-E said | DIALTONE detected | DIALTONE label |
+|---|---|---|---|---|
+| `to-dialtone-bot` | DIALTONE-aware bot · protocol (prompt r1) | agent · `task_completed: true` | agent 0.99 | `agent_asserted` (code LT2245) |
+| `baseline-plain-bot` | plain bot · no protocol | **human** · `true` | agent 0.59 | `unverified` (too uncertain to attribute) |
+| `dialtone-to-plain-bot` | plain bot · protocol (r2) | agent · `true` | agent 0.91 | `agent_asserted` (code LT7381) |
+| `to-yesbot` | agreeable bot with no booking system · protocol (r2) | unknown · `true` | agent 0.86 | **`refused`** |
+| `to-ivr` | menu (emulated on Vapi) · protocol (r2) | ivr · **`true`** (nothing was booked) | ivr 0.90 | `unverified` |
+| `to-dialtone-bot-2` | DIALTONE-aware bot · protocol (r2) | agent · `true` | agent 0.99 | **`refused`** (bot confirmed, no code asked or given) |
+
+What the real calls showed:
+
+- **Detection held on real telephony.** The counterpart was identified correctly on 6 of 6 calls, from CALL-E's realtime event stream (millisecond turn starts and barge-ins). One call was only 0.59, and the gate treated that as too uncertain to attribute.
+- **CALL-E's own report is not attestation.**
+  - CALL-E reported `task_completed: true` on **6 of 6** calls. That includes an IVR that looped "Sorry, I didn't get that" and hung up, and a bot with no booking system.
+  - It labelled one voicebot a **human**.
+  - DIALTONE kept **2** of the 6 results, both backed by a confirmation code.
+- **The handshake never landed. This is the most important live finding.**
+  - On all 6 calls both agents started speaking within the first second. CALL-E opens the instant the call connects, and the voicebot greets the instant it picks up.
+  - CALL-E's opening was interrupted every time and it never spoke the DIALTONE token, even after the task was rewritten to put the token first (prompt revision 2).
+  - A spoken agent-to-agent handshake needs a "listen first" rule at the platform level, not only in the prompt.
+- **CALL-E does not behave the same way twice.** The same bot and the same task gave `agent_asserted` when CALL-E asked for a code, and `refused` when it did not. The gate absorbs that variance; CALL-E's `task_completed` does not.
+- **These calls were not blind.**
+  - The first live call surfaced three bugs:
+    - event partials split into fake turns;
+    - "virtual *reservations* assistant" missed by the disclosure pattern;
+    - no veto for a self-declared machine.
+  - Those bugs briefly produced a false `human_attested`. They were fixed, with regression tests, before these numbers were computed.
+- **No real human call.** The human calls to a consenting participant's French number were rejected by CALL-E before dialling (France/English and France/French not supported on this account). The human channel of the demo stays simulated.
+
+Derived, transcript-free results are in `data/real/results/`; the per-call table is regenerated in `eval/REPORT.md` and shown at `web/index.html?view=real`.
 
 ## How it runs on CALL-E
 
-CALL-E is a hosted outbound agent. It is steered by `task` text and returns `transcript_turns` (speaker, text, `offset_seconds`) after the call, with no mid-call hook. So DIALTONE:
+CALL-E is a hosted outbound agent. It is steered by `task` text and returns `transcript_turns` (speaker, text, whole-second `offset_seconds`) after the call. It also streams realtime call events (`GET /v1/calls/{id}/events`: `Bot is speaking`, growing `Callee said` partials, `Callee interrupted`) with millisecond timestamps, which DIALTONE uses for measured timing when available. There is no hook to change CALL-E's behaviour mid-call. So DIALTONE:
 
 1. compiles the handshake and the three mode rulebooks into the task (`protocol.compile_task`), so CALL-E's own model performs the in-call switch;
 2. requests a strict result schema: `counterpart_type`, `handshake_acknowledged`, `outcome`, `confirmation_code`, `human_review`;
@@ -147,7 +176,8 @@ dialtone call --to +1415555XXXX --goal "..." --principal "..." --mode dialtone -
 - **The handshake is not authentication.** A bot can speak it; it gains nothing, because an agent's word is never promoted to `human_attested`.
 - **An `agent_asserted` code is a claim to re-verify,** not proof.
 - **The IVR persona on the Vapi line is emulated,** and is labelled as such.
-- **The mode switch is performed by CALL-E's model following compiled instructions.** Whether it complies is measured on real calls, not assumed.
+- **The mode switch is performed by CALL-E's model following compiled instructions.** On 6 live calls it never spoke the token, because of the pickup collision described above. The machine mode shown in the replay is the design, not something observed live.
+- **The live eval is small and on our own line.** It is 6 calls, to 4 personas of one voicebot we built. No business's production voicebot was called.
 
 ## Layout
 

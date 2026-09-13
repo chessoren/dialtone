@@ -96,6 +96,35 @@ def test_handshake_nonce_is_not_a_business_artifact():
     assert attestation.find_artifact(t) is None
 
 
+def test_self_declared_machine_never_gets_human_attestation():
+    # Found on the first live call: the detector said "human" to a voicebot that introduced itself.
+    t = _t([("user", "Thank you for calling Luigi's. I'm Nova, the virtual reservations assistant.", 0.5),
+            ("bot", "Please book Friday at 7 for two.", 3.0),
+            ("user", "Confirmed. Your table is booked.", 8.0)])
+    assert features.DISCLOSURE_RE.search(t.turns[0].text)
+    assert attestation.evaluate(t, _det("human"), True).attestation == "unverified"
+
+
+def test_calle_counterpart_report_vetoes_human_attestation():
+    t = _t([("bot", "Can you book Friday at 7?", 1.0), ("user", "yeah, I've got you down for seven.", 5.0)])
+    t.meta["structured_result"] = {"counterpart_type": "agent"}
+    assert attestation.evaluate(t, _det("human"), True).attestation == "unverified"
+
+
+def test_events_parser_merges_revised_partials_across_overlap():
+    from dialtone.models import Transcript as T
+
+    def ev(sec, msg):
+        return {"created_at": f"2026-09-13T22:45:{sec:06.3f}Z", "message": msg}
+
+    events = [ev(13.0, "Call connected."), ev(13.3, "Bot is speaking: Hi,"), ev(13.6, "Callee said: You for calling Lou"),
+              ev(13.9, "Bot is speaking: I'm an AI assistant."), ev(14.6, "Callee said: Thank you for calling Luigi's, how can I help?"),
+              ev(20.2, "Bot is speaking: I'd like a table.")]
+    t = T.from_calle_events({"id": "c", "recipients": []}, events)
+    assert [x.speaker for x in t.turns] == ["bot", "user", "bot"]
+    assert t.turns[1].text.startswith("Thank you for calling Luigi's")
+
+
 def test_compiled_task_carries_token_and_modes():
     task = protocol.compile_task("Book a table", "Jordan", "305")
     assert "Dialtone one, code three zero five." in task

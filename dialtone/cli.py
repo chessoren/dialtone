@@ -44,6 +44,7 @@ def main(argv: list[str] | None = None) -> int:
         q.add_argument("--principal", default="the customer")
         q.add_argument("--mode", choices=["dialtone", "plain"], default="dialtone")
         q.add_argument("--region", default="US")
+        q.add_argument("--locale", default="en-US", help="callee locale, e.g. fr-FR (CALL-E rejects some region/language pairs)")
         q.add_argument("--nonce")
         q.add_argument("--name", help="run name used for saved files")
         q.add_argument("--label", choices=["human", "ivr", "agent"], help="ground truth, for the real-call eval")
@@ -102,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
         from . import protocol, runner
 
         nonce = args.nonce or protocol.new_nonce()
-        request = runner.build_request(args.to, args.goal, args.principal, args.mode, nonce, args.region)
+        request = runner.build_request(args.to, args.goal, args.principal, args.mode, nonce, args.region, args.locale)
         shown = json.dumps(request, indent=2).replace(args.to, runner.mask(args.to))
         print(shown)
         print(f"\nnonce: {nonce}  mode: {args.mode}  destination: {runner.mask(args.to)}")

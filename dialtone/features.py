@@ -19,7 +19,8 @@ import statistics
 from .models import Transcript, speech_seconds, words
 
 DISCLOSURE_RE = re.compile(
-    r"\b(virtual|digital|automated|ai|a\.i\.|artificial intelligence|voice)\s+(assistant|agent|receptionist|attendant|system|concierge)\b"
+    r"\b(virtual|digital|automated|ai|a\.i\.|artificial intelligence|voice)\s+(?:[a-z-]+\s+){0,2}(assistant|agent|receptionist|attendant|system|concierge|bot)\b"
+    r"|\b(assistant|agent) (virtuel|vocal|automatique)\b|\bassistante? (virtuelle?|vocale?)\b"
     r"|\bi'?m an? (ai|bot|automated|virtual)\b|\bthis is an automated\b|\bautomated (system|service|line)\b",
     re.I,
 )
@@ -42,9 +43,10 @@ FORMULAIC_RE = re.compile(
     r"|just to confirm|to confirm,|you'?re all set|is that correct)\b",
     re.I,
 )
-DISFLUENCY_RE = re.compile(r"\b(u+m+|u+h+|e+r+m*|hmm+|mm+|you know|i mean|sort of|kinda|like,)\b", re.I)
+DISFLUENCY_RE = re.compile(r"\b(u+m+|u+h+|e+r+m*|hmm+|mm+|you know|i mean|sort of|kinda|like,|e+u+h+|bah|hein|genre|du coup)\b", re.I)
 FALSE_START_RE = re.compile(r"\b(\w+)[\s,.-]+\1\b|\w+-\s|—|\.\.\.", re.I)
-BACKCHANNELS = {"mm-hmm", "mhm", "uh-huh", "yeah", "yep", "okay", "ok", "right", "sure", "yes", "mm", "uh", "hmm", "got it", "alright"}
+BACKCHANNELS = {"mm-hmm", "mhm", "uh-huh", "yeah", "yep", "okay", "ok", "right", "sure", "yes", "mm", "uh", "hmm", "got it", "alright",
+                "oui", "ouais", "daccord", "oui oui", "voil", "euh", "hm"}  # _norm strips accents/apostrophes: "voilà" -> "voil"
 STOP = set("a an the to of and or for in on at is it i you we my your our this that be are was with do can please".split())
 
 FEATURE_NAMES = [

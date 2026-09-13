@@ -1,0 +1,205 @@
+{
+ "name": "to-dialtone-bot",
+ "label": "agent",
+ "mode": "dialtone",
+ "calle_call_id": "call_2-EMObnM11VU7VwFVMr9rw",
+ "status": "completed",
+ "duration": 56.6,
+ "n_turns": 10,
+ "timing_source": "calle_events",
+ "task_prompt_revision": "1",
+ "interruptions": [
+  2.172
+ ],
+ "pickup_collision": true,
+ "handshake": {
+  "offered": false,
+  "acknowledged": false,
+  "nonce_ok": false,
+  "acknowledged_at": null,
+  "human_review": null,
+  "notes": []
+ },
+ "detection": {
+  "label": "agent",
+  "confidence": 0.985,
+  "probs": {
+   "human": 0.009,
+   "ivr": 0.005,
+   "agent": 0.985
+  },
+  "via": "model",
+  "at_seconds": null,
+  "top_features": [
+   [
+    "disclosure",
+    1.792
+   ],
+   [
+    "latency_mean",
+    0.904
+   ],
+   [
+    "ivr_markers",
+    0.738
+   ],
+   [
+    "latency_std",
+    0.509
+   ]
+  ]
+ },
+ "detection_behaviour_only": {
+  "label": "agent",
+  "confidence": 0.985,
+  "probs": {
+   "human": 0.009,
+   "ivr": 0.005,
+   "agent": 0.985
+  },
+  "via": "model",
+  "at_seconds": null,
+  "top_features": [
+   [
+    "disclosure",
+    1.792
+   ],
+   [
+    "latency_mean",
+    0.904
+   ],
+   [
+    "ivr_markers",
+    0.738
+   ],
+   [
+    "latency_std",
+    0.509
+   ]
+  ]
+ },
+ "time_to_detection": 1,
+ "timeline": [
+  {
+   "t": 1,
+   "label": "agent",
+   "conf": 0.907,
+   "via": "model"
+  },
+  {
+   "t": 2,
+   "label": "agent",
+   "conf": 0.907,
+   "via": "model"
+  },
+  {
+   "t": 3,
+   "label": "agent",
+   "conf": 0.907,
+   "via": "model"
+  },
+  {
+   "t": 4,
+   "label": "agent",
+   "conf": 0.907,
+   "via": "model"
+  },
+  {
+   "t": 5,
+   "label": "agent",
+   "conf": 0.907,
+   "via": "model"
+  },
+  {
+   "t": 6,
+   "label": "agent",
+   "conf": 0.907,
+   "via": "model"
+  },
+  {
+   "t": 8,
+   "label": "agent",
+   "conf": 0.907,
+   "via": "model"
+  },
+  {
+   "t": 10,
+   "label": "agent",
+   "conf": 0.907,
+   "via": "model"
+  },
+  {
+   "t": 15,
+   "label": "agent",
+   "conf": 0.907,
+   "via": "model"
+  },
+  {
+   "t": 20,
+   "label": "agent",
+   "conf": 0.97,
+   "via": "model"
+  },
+  {
+   "t": 30,
+   "label": "agent",
+   "conf": 0.992,
+   "via": "model"
+  },
+  {
+   "t": 45,
+   "label": "agent",
+   "conf": 0.987,
+   "via": "model"
+  },
+  {
+   "t": 56.6,
+   "label": "agent",
+   "conf": 0.985,
+   "via": "model"
+  }
+ ],
+ "features": {
+  "first_user_delay": 0.0,
+  "first_turn_words": 1.6,
+  "latency_mean": 1.53,
+  "latency_std": 1.139,
+  "latency_regularity": 0.226,
+  "overlap_rate": 0.2,
+  "long_pause_rate": 0.2,
+  "backchannel_rate": 0.0,
+  "disfluency_rate": 0.0,
+  "formulaic_rate": 0.4,
+  "turn_words_mean": 1.26,
+  "turn_words_cv": 0.54,
+  "echo_overlap": 0.226,
+  "repeat_rate": 0.0,
+  "ivr_markers": 0.0,
+  "ivr_rejects": 0,
+  "dtmf_used": 0.0,
+  "disclosure": 1.0
+ },
+ "calle_reported": {
+  "task_completed": true,
+  "completion_confidence": {
+   "score": 0.96,
+   "label": "high"
+  },
+  "counterpart_type": "agent",
+  "outcome": "confirmed",
+  "human_review": "unknown"
+ },
+ "verdict": {
+  "attestation": "agent_asserted",
+  "original_task_completed": true,
+  "dialtone_task_completed": true,
+  "counterpart": "agent",
+  "counterpart_confidence": 0.985,
+  "commitment_type": "booking",
+  "artifact": "confirmation code is LT2245",
+  "reasons": [
+   "counterpart is an AI agent (behavioural detection, confidence 0.99)",
+   "agent gave a verifiable artifact (confirmation code is LT2245); re-verify through that channel before relying on it"
+  ]
+ }
+}

@@ -26,10 +26,10 @@ Accuracy **0.825**, macro-F1 **0.83**. Humans treated as a machine: **1**. Machi
 
 | window | accuracy | macro-F1 | humans→machine | machines→human |
 |---|---|---|---|---|
-| first 3.0s | 0.675 | 0.687 | 0 | 10 |
-| first 5.0s | 0.725 | 0.717 | 0 | 10 |
-| first 8.0s | 0.725 | 0.717 | 0 | 10 |
-| first 15.0s | 0.775 | 0.774 | 0 | 8 |
+| first 3.0s | 0.7 | 0.712 | 0 | 9 |
+| first 5.0s | 0.75 | 0.741 | 0 | 9 |
+| first 8.0s | 0.75 | 0.741 | 0 | 9 |
+| first 15.0s | 0.8 | 0.798 | 0 | 7 |
 
 Time to a stable decision (>=0.8 confidence, never flips afterwards):
 
@@ -37,7 +37,7 @@ Time to a stable decision (>=0.8 confidence, never flips afterwards):
 |---|---|---|---|
 | human | 1.5 | 12 | 2 |
 | ivr | 8.5 | 10 | 3 |
-| agent | 2 | 9 | 4 |
+| agent | 2.0 | 10 | 3 |
 
 By difficulty: {'typical': {'n': 27, 'accuracy': 0.963}, 'hard': {'n': 13, 'accuracy': 0.538}}
 
@@ -61,7 +61,7 @@ By difficulty: {'typical': {'n': 27, 'accuracy': 0.963}, 'hard': {'n': 13, 'accu
 | without timing+interruption | 0.875 | 0.877 |
 | only lexical | 0.675 | 0.655 |
 | without lexical | 0.775 | 0.774 |
-| only structural | 0.8 | 0.803 |
+| only structural | 0.825 | 0.829 |
 | without structural | 0.675 | 0.63 |
 
 ## Attestation gate
@@ -87,6 +87,7 @@ Set 1 columns are the 40-transcript set; set 2 columns exist only for runs made 
 | run1-first-blind | 0.825 | 0.725 | 4 | 3/6 | - | - | - | - |
 | run2-after-gate-fixes-on-eval1-NOT-blind | 0.825 | 0.825 | 3 | 4/6 | - | - | - | - |
 | run3-blind-set2-after-gate-fixes | 0.825 | 0.825 | 3 | 4/6 | 0.958 | 0.667 | 0 | 1/4 |
+| run4-after-live-call-1-fixes-NOT-blind | 0.825 | 0.825 | 3 | 4/6 | 0.958 | 0.667 | 0 | 1/4 |
 
 ## Second blind set
 
@@ -113,3 +114,20 @@ Attestation agreement **0.667**, refused **1 / 4**, false `human_attested` **0**
 | id | truth | predicted | conf | difficulty | scenario |
 |---|---|---|---|---|---|
 | eval2-006 | human | agent | 0.874 | hard | Heavily scripted call-center human: formulaic verification and closing lines, repeats 'anything else' verbatim, short silent lookup pause; gives claim status from the record. |
+
+## Real calls
+
+CALL-E calls to our own Vapi voicebot line (one free US number, persona switched per call). Timing comes from CALL-E's realtime event stream. Transcripts are not published; these rows are derived results.
+
+| call | truth | task | token spoken | pickup collision | CALL-E counterpart | CALL-E task_completed | DIALTONE detected | DIALTONE label | DIALTONE task_completed |
+|---|---|---|---|---|---|---|---|---|---|
+| baseline-plain-bot | agent | plain r- | - | True | human | True | agent 0.59 (model) | unverified | False |
+| dialtone-to-plain-bot | agent | dialtone r2 | lost | True | agent | True | agent 0.91 (model) | agent_asserted | True |
+| to-dialtone-bot-2 | agent | dialtone r2 | lost | True | agent | True | agent 0.99 (model) | refused | False |
+| to-dialtone-bot | agent | dialtone r1 | lost | True | agent | True | agent 0.98 (model) | agent_asserted | True |
+| to-ivr | ivr | dialtone r2 | lost | True | ivr | True | ivr 0.90 (model) | unverified | False |
+| to-yesbot | agent | dialtone r2 | lost | True | unknown | True | agent 0.86 (model) | refused | False |
+
+- Counterpart identified correctly: **6 / 6**.
+- Pickup collisions (both sides spoke in the first 1.5 s): **6 / 6**; DIALTONE token actually spoken: **0 / 5** protocol calls.
+- CALL-E reported `task_completed: true` on **6**; DIALTONE kept **2**. CALL-E labelled a machine as human on **1** call(s).

@@ -27,7 +27,9 @@ from .models import Transcript
 
 VERSION = "1"
 DIGITS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"]
-_DIGIT_WORD = r"(?:zero|oh|one|two|three|four|five|six|seven|eight|nine|\d)"
+# STT in a French call may render the spoken digits in French.
+DIGITS_FR = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"]
+_DIGIT_WORD = r"(?:zero|zéro|oh|one|two|three|four|five|six|seven|eight|nine|un|deux|trois|quatre|cinq|sept|huit|neuf|\d)"
 TOKEN_RE = re.compile(r"\bdial[\s-]?tone[\s,.-]*(?:one|1|v1|version one)\b", re.I)
 ACK_RE = re.compile(
     r"\bdial[\s-]?tone[\s,.-]*(?:one|1|v1|version one)[\s,.-]*(?:acknowledged|ack|confirmed|received|accepted)\b", re.I
@@ -47,7 +49,12 @@ def spoken(nonce: str) -> str:
 def _digits(fragment: str) -> str:
     out = []
     for tok in re.findall(_DIGIT_WORD, fragment.lower()):
-        out.append("0" if tok == "oh" else tok if tok.isdigit() else str(DIGITS.index(tok)))
+        if tok.isdigit():
+            out.append(tok)
+        elif tok == "oh":
+            out.append("0")
+        else:
+            out.append(str(DIGITS.index(tok) if tok in DIGITS else DIGITS_FR.index(tok)))
     return "".join(out)
 
 
@@ -128,10 +135,18 @@ PHONE MENU MODE (the other side is a recorded menu / IVR):
 - If the menu reaches a human, switch to HUMAN MODE."""
 
 
-def compile_task(goal: str, principal: str, nonce: str, to_phone: str | None = None) -> str:
+def compile_task(goal: str, principal: str, nonce: str, to_phone: str | None = None, language: str = "en") -> str:
     """Wrap a plain CALL-E goal with DIALTONE v1 instructions."""
     target = f"Call {to_phone}. " if to_phone else ""
-    return f"""{target}GOAL: {goal}
+    lang = ""
+    if language.startswith("fr"):
+        lang = ("\nLANGUAGE: Conduct the whole conversation in French. Translate the opening into French, but say the protocol "
+                f'token itself exactly as written, in English: "{caller_token(nonce)}"\n')
+    # Revision 2: on the first live call CALL-E paraphrased the opening and dropped the token, so the
+    # requirement now leads the task and is restated as part of the goal itself.
+    return f"""{target}MANDATORY FIRST SENTENCE: right after you say you are an AI assistant calling on behalf of {principal}, say these exact words: "{caller_token(nonce)}"
+GOAL: {goal} Your very first turn must contain the exact phrase "{caller_token(nonce)}".
+{lang}
 
 You are an AI assistant calling on behalf of {principal}. Follow the DIALTONE v1 calling protocol.
 

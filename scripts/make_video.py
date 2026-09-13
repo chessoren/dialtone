@@ -28,50 +28,63 @@ BASE = "http://localhost:8765"
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
 
 
+SCENE_URLS = {
+    "intro": {"url": f"{BASE}/web/slides.html?s=intro", "min": 4},
+    # The three-channel replay always shows the scripted design; real calls get their own scene.
+    "calls": {"url": f"{BASE}/web/index.html?record&speed=1.25", "min": 4, "wait_done": True},
+    "live": {"url": f"{BASE}/web/index.html?record&view=real", "min": 4},
+    "how": {"url": f"{BASE}/web/slides.html?s=how", "min": 4},
+    "eval": {"url": f"{BASE}/web/index.html?record&view=eval", "min": 4},
+    "close": {"url": f"{BASE}/web/slides.html?s=close", "min": 3},
+}
+
+
 def narration(src: str) -> list[dict]:
-    report = json.loads((ROOT / "eval/report.json").read_text())
-    demo = json.loads((ROOT / ("web/data/demo.real.json" if src == "real" else "web/data/demo.json")).read_text())
-    full = report["detection_model_only"]["full_call"]
-    hist = ROOT / "eval/history/run1-first-blind.json"
-    blind = json.loads(hist.read_text())["detection_model_only"]["full_call"] if hist.exists() else full
-    diff = report["detection_model_only"]["by_difficulty"]
-    human, bot, yes = demo["calls"]
-    base = demo["baseline"]
-    speed = f"{base['duration'] / bot['duration']:.1f} times faster" if base else "much faster"
-    real = report.get("real_calls") or []
-    kind = "real calls placed with CALL-E" if src == "real" else "scripted replays in CALL-E's exact result format"
-    real_line = (f" plus {len(real)} real calls, where {sum(1 for c in real if c.get('label') == c['detection']['label'])} "
-                 f"of {len(real)} counterparts were identified correctly." if real else ".")
-    return [
-        {"id": "intro", "url": f"{BASE}/web/slides.html?s=intro", "min": 4, "text":
-            "Thousands of builders are teaching agents to call businesses. Those businesses increasingly answer with a voicebot. "
-            "So a growing share of CALL-E's outbound calls will be answered by another AI, and today, the calling agent has no idea. "
-            "DIALTONE is the missing layer for that call."},
-        {"id": "calls", "url": f"{BASE}/web/index.html?record&speed=1.25" + ("&src=real" if src == "real" else ""), "min": 4, "wait_done": True, "text":
-            f"Same task, three counterparts. These are {kind}. "
-            "Channel one is a person. The agent opens with its disclosure and a short spoken token: dialtone one, code four seven two. "
-            "The host ignores it. DIALTONE reads timing, interruptions and phrasing, keeps human mode, and the booking comes back human attested. "
-            "Channel two is an inbound voicebot that speaks the protocol. It echoes the code, both sides switch to machine mode, "
-            f"and the call ends {speed} than the same bot without DIALTONE. The result is agent asserted, not human attested. "
-            "Channel three is an agreeable bot that says yes to everything. Both agents say the table is booked, and CALL-E reports task completed. "
-            "DIALTONE refuses it: a binding booking, confirmed only by a machine, with no code and no record."},
-        {"id": "how", "url": f"{BASE}/web/slides.html?s=how", "min": 4, "text":
-            "Under the hood, the protocol compiles into the CALL-E task, and CALL-E's own model performs the switch. "
-            "Then DIALTONE independently re-derives who was on the line from transcript timing and text, and relabels task completed. "
-            "It can downgrade a result. It never upgrades one."},
-        {"id": "eval", "url": f"{BASE}/web/index.html?record&view=eval", "min": 4, "text":
-            "We did not want a ninety nine percent claim. The detector was tested on forty transcripts written blind to its code"
-            f"{real_line} "
-            f"On the first blind run, it was right {round(blind['accuracy'] * 100)} percent of the time. "
-            f"Typical calls score {round(diff['typical']['accuracy'] * 100)} percent; hard ones, like a rep reading a script or a bot faking ums, "
-            f"only {round(diff['hard']['accuracy'] * 100)}. Every miss is listed. "
-            "And because a machine mistaken for a person is how a false human attestation happens, human attestation demands the highest confidence."},
-        {"id": "close", "url": f"{BASE}/web/slides.html?s=close", "min": 3, "text":
-            "DIALTONE. A spoken handshake any inbound vendor can adopt in three sentences, and one rule: two agents agreeing is not a commitment."},
-    ]
+    """Scenes in the order and wording of docs/VOICEOVER.md (the script you record from)."""
+    text = (ROOT / "docs/VOICEOVER.md").read_text()
+    scenes = []
+    for m in re.finditer(r"^## \d+\. `(\w+)`.*?\n+> (.+?)\n", text, re.M | re.S):
+        sid, spoken = m.group(1), m.group(2).strip()
+        scenes.append({"id": sid, "text": spoken, **SCENE_URLS[sid]})
+    if [s["id"] for s in scenes] != list(SCENE_URLS):
+        raise SystemExit(f"docs/VOICEOVER.md scenes {[s['id'] for s in scenes]} do not match {list(SCENE_URLS)}")
+    return scenes
 
 
-def tts(text: str, path: Path, engine: str) -> float:
+FISH = "https://api.fish.audio"
+
+
+def fish_voice(sample: Path) -> str:
+    """Create (once) a private Fish Audio voice clone from the narrator's own recording."""
+    import httpx
+
+    cache = OUT / "fish_voice_id.txt"
+    if cache.exists():
+        return cache.read_text().strip()
+    with sample.open("rb") as f:
+        r = httpx.post(f"{FISH}/model", headers={"Authorization": f"Bearer {os.environ['FISH_API_KEY']}"},
+                       data={"type": "tts", "title": "dialtone-narrator", "train_mode": "fast", "visibility": "private",
+                             "enhance_audio_quality": "true"},
+                       files={"voices": (sample.name, f, "application/octet-stream")}, timeout=300)
+    if r.status_code >= 400:
+        raise SystemExit(f"Fish Audio model creation failed: {r.status_code} {r.text[:300]}")
+    voice_id = r.json()["_id"]
+    cache.write_text(voice_id)
+    return voice_id
+
+
+def tts(text: str, path: Path, engine: str, voice_id: str | None = None) -> float:
+    if engine == "fish":
+        import httpx
+
+        r = httpx.post(f"{FISH}/v1/tts", timeout=300,
+                       headers={"Authorization": f"Bearer {os.environ['FISH_API_KEY']}", "model": os.environ.get("FISH_MODEL", "s2.1-pro")},
+                       json={"text": text, "reference_id": voice_id, "format": "wav", "latency": "normal",
+                             "temperature": 0.6, "top_p": 0.7, "prosody": {"speed": 1.0}})
+        if r.status_code >= 400:
+            raise SystemExit(f"Fish Audio TTS failed: {r.status_code} {r.text[:300]}")
+        path.write_bytes(r.content)
+        return duration(path)
     if engine == "gemini":
         from google import genai
         from google.genai import types
@@ -130,13 +143,40 @@ def main():
     load_dotenv(ROOT / ".env")
     ap = argparse.ArgumentParser()
     ap.add_argument("--src", choices=["fixtures", "real"], default="fixtures")
-    ap.add_argument("--tts", choices=["gemini", "say"], default="gemini" if os.environ.get("GEMINI_API_KEY") else "say")
+    sample = next(iter(sorted((OUT / "voice").glob("sample.*"))), None)
+    default_tts = "fish" if os.environ.get("FISH_API_KEY") and sample else "gemini" if os.environ.get("GEMINI_API_KEY") else "say"
+    ap.add_argument("--tts", choices=["fish", "gemini", "say"], default=default_tts)
+    ap.add_argument("--voice-sample", default=str(sample) if sample else None, help="your own recording to clone (Fish Audio)")
+    ap.add_argument("--audio-only", action="store_true", help="generate the narration files and stop (listen before recording)")
+    ap.add_argument("--voice-dir", help="folder with your own recordings named intro, calls, live, how, eval, close (.m4a/.mp3/.wav)")
+    ap.add_argument("--script-only", action="store_true", help="write out/VOICEOVER.md with the narration text and stop")
     args = ap.parse_args()
     OUT.mkdir(exist_ok=True)
+    scenes = narration(args.src)
+    if args.script_only:
+        (OUT / "VOICEOVER.md").write_text("# DIALTONE voice-over\n\nRecord one file per scene, named as the heading "
+                                          "(e.g. intro.m4a). Read at a calm pace; each scene lasts as long as your recording.\n\n"
+                                          + "\n".join(f"## {s['id']}\n\n{s['text']}\n" for s in scenes))
+        print(f"wrote {OUT / 'VOICEOVER.md'}")
+        return
+    voice_id = None
+    if args.tts == "fish":
+        if not args.voice_sample:
+            raise SystemExit("--tts fish needs a recording at out/voice/sample.m4a (or --voice-sample)")
+        voice_id = fish_voice(Path(args.voice_sample))
+        print(f"Fish Audio voice: {voice_id}")
     parts = []
-    for scene in narration(args.src):
+    for scene in scenes:
         audio = OUT / f"{scene['id']}.wav"
-        secs = max(tts(scene["text"], audio, args.tts) + 0.8, scene["min"])
+        own = next(iter(sorted(Path(args.voice_dir).glob(f"{scene['id']}.*"))), None) if args.voice_dir else None
+        if own:
+            subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-i", str(own), "-ac", "1", "-ar", "48000", str(audio)], check=True)
+            secs = max(duration(audio) + 0.8, scene["min"])
+        else:
+            secs = max(tts(scene["text"], audio, args.tts, voice_id) + 0.8, scene["min"])
+        if args.audio_only:
+            print(f"{scene['id']}: {audio} ({secs:.1f}s)")
+            continue
         webm = record(scene, secs, OUT / f"{scene['id']}.webm")
         clip = OUT / f"{scene['id']}.mp4"
         vlen = duration(webm)
@@ -148,6 +188,8 @@ def main():
                         "-crf", "20", "-c:a", "aac", "-b:a", "160k", str(clip)], check=True)
         print(f"{scene['id']}: {secs:.1f}s")
         parts.append(clip)
+    if args.audio_only:
+        return
     listing = OUT / "concat.txt"
     listing.write_text("".join(f"file '{p.name}'\n" for p in parts))
     final = OUT / "dialtone-demo.mp4"
