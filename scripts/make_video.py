@@ -149,6 +149,7 @@ def main():
     ap.add_argument("--voice-sample", default=str(sample) if sample else None, help="your own recording to clone (Fish Audio)")
     ap.add_argument("--fish-voice", default=os.environ.get("FISH_VOICE_ID"), help="an existing Fish Audio voice id to use instead of cloning")
     ap.add_argument("--audio-only", action="store_true", help="generate the narration files and stop (listen before recording)")
+    ap.add_argument("--only", help="comma-separated scene ids to re-render; other scenes reuse their existing out/<id>.mp4")
     ap.add_argument("--voice-dir", help="folder with your own recordings named intro, calls, live, how, eval, close (.m4a/.mp3/.wav)")
     ap.add_argument("--script-only", action="store_true", help="write out/VOICEOVER.md with the narration text and stop")
     args = ap.parse_args()
@@ -170,7 +171,12 @@ def main():
         voice_id = fish_voice(Path(args.voice_sample))
         print(f"Fish Audio voice: {voice_id}")
     parts = []
+    only = set(args.only.split(",")) if args.only else None
     for scene in scenes:
+        if only and scene["id"] not in only and (OUT / f"{scene['id']}.mp4").exists():
+            parts.append(OUT / f"{scene['id']}.mp4")
+            print(f"{scene['id']}: reused")
+            continue
         audio = OUT / f"{scene['id']}.wav"
         own = next(iter(sorted(Path(args.voice_dir).glob(f"{scene['id']}.*"))), None) if args.voice_dir else None
         if own:
