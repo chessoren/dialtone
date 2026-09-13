@@ -147,6 +147,7 @@ def main():
     default_tts = "fish" if os.environ.get("FISH_API_KEY") and sample else "gemini" if os.environ.get("GEMINI_API_KEY") else "say"
     ap.add_argument("--tts", choices=["fish", "gemini", "say"], default=default_tts)
     ap.add_argument("--voice-sample", default=str(sample) if sample else None, help="your own recording to clone (Fish Audio)")
+    ap.add_argument("--fish-voice", default=os.environ.get("FISH_VOICE_ID"), help="an existing Fish Audio voice id to use instead of cloning")
     ap.add_argument("--audio-only", action="store_true", help="generate the narration files and stop (listen before recording)")
     ap.add_argument("--voice-dir", help="folder with your own recordings named intro, calls, live, how, eval, close (.m4a/.mp3/.wav)")
     ap.add_argument("--script-only", action="store_true", help="write out/VOICEOVER.md with the narration text and stop")
@@ -160,7 +161,10 @@ def main():
         print(f"wrote {OUT / 'VOICEOVER.md'}")
         return
     voice_id = None
-    if args.tts == "fish":
+    if args.tts == "fish" and args.fish_voice:
+        voice_id = args.fish_voice
+        print(f"Fish Audio stock voice: {voice_id}")
+    elif args.tts == "fish":
         if not args.voice_sample:
             raise SystemExit("--tts fish needs a recording at out/voice/sample.m4a (or --voice-sample)")
         voice_id = fish_voice(Path(args.voice_sample))
