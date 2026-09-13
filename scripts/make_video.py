@@ -78,7 +78,7 @@ def tts(text: str, path: Path, engine: str, voice_id: str | None = None) -> floa
         import httpx
 
         r = httpx.post(f"{FISH}/v1/tts", timeout=300,
-                       headers={"Authorization": f"Bearer {os.environ['FISH_API_KEY']}", "model": os.environ.get("FISH_MODEL", "s2.1-pro")},
+                       headers={"Authorization": f"Bearer {os.environ['FISH_API_KEY']}", "model": os.environ.get("FISH_MODEL", "s2.1-pro-free")},
                        json={"text": text, "reference_id": voice_id, "format": "wav", "latency": "normal",
                              "temperature": 0.6, "top_p": 0.7, "prosody": {"speed": 1.0}})
         if r.status_code >= 400:
